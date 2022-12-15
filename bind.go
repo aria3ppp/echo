@@ -128,7 +128,13 @@ func (b *DefaultBinder) bindData(destination interface{}, data map[string][]stri
 	if destination == nil || len(data) == 0 {
 		return nil
 	}
-	typ := reflect.TypeOf(destination).Elem()
+	
+	reflectType := reflect.TypeOf(destination)
+	if reflectType.Kind() != reflect.Ptr {
+		return errors.New("binding element must be a pointer")
+	}
+
+	typ := reflectType.Elem()
 	val := reflect.ValueOf(destination).Elem()
 
 	// Map
