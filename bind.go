@@ -43,7 +43,7 @@ func (b *DefaultBinder) BindPathParams(c Context, i interface{}) error {
 	}
 	if err := b.bindData(i, params, "param"); err != nil {
 		if internalErr, ok := err.(internalError); ok {
-			return NewHTTPError(http.StatusInternalServerError).SetInternal(err)
+			return NewHTTPError(http.StatusInternalServerError).SetInternal(internalErr.error)
 		}
 		return NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	}
@@ -54,7 +54,7 @@ func (b *DefaultBinder) BindPathParams(c Context, i interface{}) error {
 func (b *DefaultBinder) BindQueryParams(c Context, i interface{}) error {
 	if err := b.bindData(i, c.QueryParams(), "query"); err != nil {
 		if internalErr, ok := err.(internalError); ok {
-			return NewHTTPError(http.StatusInternalServerError).SetInternal(err)
+			return NewHTTPError(http.StatusInternalServerError).SetInternal(internalErr.error)
 		}
 		return NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	}
@@ -110,7 +110,7 @@ func (b *DefaultBinder) BindBody(c Context, i interface{}) (err error) {
 func (b *DefaultBinder) BindHeaders(c Context, i interface{}) error {
 	if err := b.bindData(i, c.Request().Header, "header"); err != nil {
 		if internalErr, ok := err.(internalError); ok {
-			return NewHTTPError(http.StatusInternalServerError).SetInternal(err)
+			return NewHTTPError(http.StatusInternalServerError).SetInternal(internalErr.error)
 		}
 		return NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	}
