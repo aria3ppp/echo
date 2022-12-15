@@ -27,6 +27,10 @@ type (
 		// UnmarshalParam decodes and assigns a value from an form or query param.
 		UnmarshalParam(param string) error
 	}
+	
+	internalError struct {
+		error
+	}
 )
 
 // BindPathParams binds path params to bindable object
@@ -38,6 +42,9 @@ func (b *DefaultBinder) BindPathParams(c Context, i interface{}) error {
 		params[name] = []string{values[i]}
 	}
 	if err := b.bindData(i, params, "param"); err != nil {
+		if internalErr, ok := err.(internalError); ok {
+			return NewHTTPError(http.StatusInternalServerError).SetInternal(err)
+		}
 		return NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	}
 	return nil
@@ -46,6 +53,9 @@ func (b *DefaultBinder) BindPathParams(c Context, i interface{}) error {
 // BindQueryParams binds query params to bindable object
 func (b *DefaultBinder) BindQueryParams(c Context, i interface{}) error {
 	if err := b.bindData(i, c.QueryParams(), "query"); err != nil {
+		if internalErr, ok := err.(internalError); ok {
+			return NewHTTPError(http.StatusInternalServerError).SetInternal(err)
+		}
 		return NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	}
 	return nil
@@ -99,6 +109,9 @@ func (b *DefaultBinder) BindBody(c Context, i interface{}) (err error) {
 // BindHeaders binds HTTP headers to a bindable object
 func (b *DefaultBinder) BindHeaders(c Context, i interface{}) error {
 	if err := b.bindData(i, c.Request().Header, "header"); err != nil {
+		if internalErr, ok := err.(internalError); ok {
+			return NewHTTPError(http.StatusInternalServerError).SetInternal(err)
+		}
 		return NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	}
 	return nil
@@ -131,7 +144,7 @@ func (b *DefaultBinder) bindData(destination interface{}, data map[string][]stri
 	
 	reflectType := reflect.TypeOf(destination)
 	if reflectType.Kind() != reflect.Ptr {
-		return errors.New("binding element must be a pointer")
+		return internalError{errors.New("binding element must be a pointer")}
 	}
 
 	typ := reflectType.Elem()
